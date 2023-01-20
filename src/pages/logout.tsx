@@ -6,10 +6,10 @@ const Logout = () => {
     const router = useRouter();
 
     useEffect(() => {
-        const logout = async () => {
-            supabase.auth.signOut();
+        async function logout() {
+            await supabase.auth.signOut();
             router.push("/");
-        };
+        }
         logout();
     }, []);
 

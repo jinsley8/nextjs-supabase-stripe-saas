@@ -10,6 +10,7 @@ export type Lesson = {
 
 export default function Home({ lessons }: { lessons: Lesson[] }) {
 
+	console.log("USER", supabase.auth.getUser());
 	console.log("LESSONS", lessons);
 
 	return (
