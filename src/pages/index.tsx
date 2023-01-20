@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from "@/utils/supabase";
+import { useUser } from "@/context/user";
 
 export type Lesson = {
 	id: string;
@@ -10,7 +11,8 @@ export type Lesson = {
 
 export default function Home({ lessons }: { lessons: Lesson[] }) {
 
-	console.log("USER", supabase.auth.getUser());
+	const { user } = useUser();
+	console.log("USER", { user });
 	console.log("LESSONS", lessons);
 
 	return (
