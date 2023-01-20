@@ -9,6 +9,7 @@ const Context = createContext<ContextType>({});
 const Provider = ({ children }: { children: ReactNode }) => {
     const router = useRouter();
     const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const getUserProfile = async () => {
@@ -30,6 +31,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
                     ...sessionUser,
                     ...profile,
                 });
+
+                setIsLoading(false);
             }
         };
 
@@ -56,6 +59,7 @@ const Provider = ({ children }: { children: ReactNode }) => {
         user,
         login,
         logout,
+        isLoading
     };
 
     return <Context.Provider value={exposed}>{children}</Context.Provider>;
