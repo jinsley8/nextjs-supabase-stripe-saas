@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
+import Video from "react-player";
 import { Lesson } from './index'
 
 type Params = {
@@ -8,12 +10,30 @@ type Params = {
 }
 
 export default function LessonDetails({ lesson }: { lesson: Lesson }) {
+    const [videoUrl, setVideoUrl] = useState();
+
     console.log("LESSON", lesson);
 
+    const getPremiumContent = async () => {
+        const { data } = await supabase
+            .from("premium_content")
+            .select("video_url")
+            .eq("id", lesson.id)
+            .single();
+
+        setVideoUrl(data?.video_url);
+    }
+
+    useEffect(() => {
+        getPremiumContent();
+    }, []);
+
     return (
-        <div className="w-full max-w-3xl mx-auto my-16 px-2">
-            <h2>{lesson.title}</h2>
-            <p>{lesson.description}</p>
+        <div className="w-full max-w-3xl mx-auto py-16 px-8">
+            <h1 className="text-3xl mb-6">{lesson.title}</h1>
+            <p className="mb-8">{lesson.description}</p>
+            {!!videoUrl && <Video url={videoUrl} width="100%" />}
+            {!videoUrl && <p className="py-6 px-4 rounded bg-purple-100 border border-solid border-violet-400 text-violet-600 text-center">Subscribe to view premium content</p>}
         </div>
     );
 }

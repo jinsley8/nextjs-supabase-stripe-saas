@@ -18,7 +18,7 @@ export default function Home({ lessons }: { lessons: Lesson[] }) {
 	return (
 		<div className="w-full max-w-3xl mx-auto my-16 px-2">
 			{lessons.map((lesson: Lesson) => (
-				<Link key={lesson.id} href={`/${lesson.id}`} className="p-8 h-40 mb-4 rounded shadow text-xl flex">{lesson.title}</Link>
+				<Link key={lesson.id} href={`/${lesson.id}`} className="p-8 mb-4 rounded shadow text-xl flex">{lesson.title}</Link>
 			))}
 		</div>
 	);
