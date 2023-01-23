@@ -1,4 +1,89 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Next.js with Supabase and Stripe Subscriptions
+
+## SQL for Supabase
+
+Run as a new SQL Query in Supabase SQL Editor.
+
+```sql
+-- PROFILES
+CREATE TABLE IF NOT EXISTS public.profile (
+    id                  uuid references auth.users(id) on delete cascade PRIMARY KEY,
+    email               text UNIQUE,
+    is_subscribed       boolean NOT NULL DEFAULT false
+    interval            text,
+    stripe_customer     text,
+    created_at          timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+comment on table public.profiles is 'Profile data for active users';
+
+-- LESSONS
+CREATE TABLE IF NOT EXISTS public.lesson (
+    id                  bigint generated always as identity PRIMARY KEY,
+    text                text,
+    description         text,
+    created_at          timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+comment on table public.profiles is 'Lessons for users to view';
+
+-- PREMIUM CONTENT
+CREATE TABLE IF NOT EXISTS public.premium_content (
+    id                  bigint generated always as identity PRIMARY KEY,
+    video_url           text,
+    created_at          timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+comment on table public.profiles is 'Premium content for lessons';
+
+-- ENABLE RLS POLICIES
+ALTER TABLE public.profile enable row level security;
+ALTER TABLE public.lesson enable row level security;
+ALTER TABLE public.premium_content enable row level security;
+
+-- CREATE RLS POLICIES
+CREATE POLICY "Only user can select their own profile" ON public.profile FOR
+SELECT
+USING (auth.uid() = id)
+
+CREATE POLICY "Enable read access for all users" ON public.lesson FOR
+SELECT
+USING (true);
+
+CREATE POLICY "Subscribed users can select premium content" ON public.lesson FOR
+SELECT
+USING (EXISTS
+    (SELECT 1
+    FROM profile
+    WHERE ((auth.uid() = profile.id) AND (profile.is_subscribed = true))))
+
+-- Trigger automatically creates a public.profile entry when a new user is created in auth.users.
+CREATE OR REPLACE FUNCTION public.create_profile_for_user()
+RETURNS TRIGGER
+AS $$
+    BEGIN
+        INSERT INTO public.profile (id, email)
+        VALUES (NEW.id, NEW.email);
+        RETURN NEW;
+    END;
+$$
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public;
+
+CREATE TRIGGER create_new_profile_for_user
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.create_profile_for_user();
+```
+
+## Login with GitHub
+
+Setup OAuth with GitHub. Follow the [guide outlined by Supabase](https://supabase.com/docs/guides/auth/social-login/auth-github).
+
+
+## Stripe
+
+Setup a Stripe account and [create checkout](https://stripe.com/docs/checkout/quickstart).
+
+## Next.js Auth Helpers for Supabase
+
+Use the new Supabase [Next.js Auth Helpers](https://supabase.com/docs/guides/auth/auth-helpers/nextjs) to get client-side and server-side sessions if using `@supabase/supabase-js` v2 JS client library.
 
 ## Getting Started
 
@@ -13,23 +98,6 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
 ## Deploy on Vercel
 
