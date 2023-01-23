@@ -1,5 +1,6 @@
 import { GetServerSidePropsContext } from 'next';
 import Stripe from 'stripe';
+import { loadStripe } from '@stripe/stripe-js';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database.types'
 import { useUserContext } from "@/context/user";
@@ -12,6 +13,9 @@ type Plan = {
     currency: string;
 }
 
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUB_KEY as string);
+console.log("PRICING - stripePromise", stripePromise);
+
 export default function Pricing ({ plans }: { plans: Plan[] }) {
     const { user, login, isLoading } = useUserContext();
 
@@ -19,10 +23,12 @@ export default function Pricing ({ plans }: { plans: Plan[] }) {
 
     const processSubscription = (planId: string) => async () => {
         const response = await fetch(`/api/subscription/${planId}`, {
-            method: 'GET'
+            method: 'POST'
         });
         const data = await response.json();
-        console.log("PRICING - PROCESS SUB", data);
+        console.log("PRICING - RESPONSE DATA", data);
+
+        window.location.href = data.stripeSession.url;
     };
 
     const showSubscribeButton = user && !user.is_subscribed;

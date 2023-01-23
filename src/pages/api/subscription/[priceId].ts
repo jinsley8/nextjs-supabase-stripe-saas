@@ -1,45 +1,66 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database.types';
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-    // Create authenticated Supabase Client
-    const supabaseServerClient = createServerSupabaseClient<Database>({
-        req,
-        res,
-    });
 
-    // Check if we have a session
-    const {
-        data: { session },
-    } = await supabaseServerClient.auth.getSession();
+    if (req.method === 'POST') {
+        const { priceId } = req.query;
 
-    const user = session?.user;
+        // Create authenticated Supabase Client
+        const supabaseServerClient = createServerSupabaseClient<Database>({
+            req,
+            res,
+        });
 
-    console.log("[priceId] - USER", user);
+        // Check if we have a session
+        const {
+            data: { session },
+        } = await supabaseServerClient.auth.getSession();
 
-    if (!user) {
-        return res.status(401).send("Unauthorized");
+        if (!session) {
+            return res.status(401).send("Unauthorized");
+        }
+
+        try {
+            const {
+                data,
+            } = await supabaseServerClient
+                .from("profile")
+                .select("stripe_customer")
+                .eq("id", session?.user.id)
+                .single();
+
+            if (!data) {
+                return res.status(404).send("Stripe customer not found");
+            }
+
+            const lineItems = [{
+                price: priceId as string,
+                quantity: 1,
+            }];
+
+            const stripeSession = await stripe.checkout.sessions.create({
+                customer: data.stripe_customer as string,
+                mode: "subscription",
+                payment_method_types: ["card"],
+                currency: "cad",
+                line_items: lineItems,
+                success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/success`,
+                cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/cancel`,
+            });
+
+            console.log("STRIPE session", stripeSession);
+
+            res.status(200).json({ stripeSession })
+        } catch (err) {
+            res.status(err.statusCode || 500).json(err.message);
+        }
+    } else {
+        res.setHeader('Allow', 'POST');
+        res.status(405).end('Method Not Allowed');
     }
-
-    if (!session) {
-        return res.status(401).send("Unauthorized");
-    }
-
-    const {
-        data: stripe_customer,
-    } = await supabaseServerClient
-        .from("profile")
-        .select("stripe_customer")
-        .eq("id", user.id)
-        .single();
-
-    console.log("STRIPE customer", stripe_customer);
-
-    res.status(200).send({
-        ...user,
-        stripe_customer,
-    });
 };
 
 export default handler;
