@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { buffer } from "micro";
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export const config = { api: { bodyParser: false } };
@@ -9,6 +10,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const signingSecret = process.env.STRIPE_SIGNING_SECRET;
     const reqBuffer = await buffer(req);
 
+    const supabase = createServerSupabaseClient({ req, res }, { 
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseKey: process.env.SUPABASE_SERVICE_KEY,
+    });
+
     let event;
 
     try {
@@ -16,6 +22,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     } catch (error) {
         console.log(error);
         return res.status(400).send(`Webhook error: ${error.message}`);
+    }
+
+    switch (event.type) {
+        case "customer.subscription.created":
+        await supabase
+            .from("profile")
+            .update({
+                is_subscribed: true,
+                interval: event.data.object.items.data[0].plan.interval,
+            })
+            .eq("stripe_customer", event.data.object.customer);
+        break;
     }
 
     console.log({ event });
