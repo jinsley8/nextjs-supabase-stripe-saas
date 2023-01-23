@@ -55,6 +55,22 @@ const Provider = ({ children }: { children: ReactNode }) => {
         });
     }, []);
 
+    useEffect(() => {
+        if (user) {
+            const subscription = supabaseClient
+                .channel(`profile:id=eq.${user.id}`)
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profile' }, (payload: any) => {
+                    console.log('Profile change received!', payload)
+                    setUser({ ...user, ...payload.new });
+                })
+                .subscribe();
+
+            return () => {
+                supabaseClient.removeChannel(subscription);
+            };
+        }
+    }, [user]);
+
     const login = async () => {
         await supabaseClient.auth.signInWithOAuth({
             provider: "github",
