@@ -1,14 +1,16 @@
 import { useEffect } from "react";
-import { useUser } from "@/context/user";
+import { useUserContext } from "@/context/user";
 
-const Logout = () => {
-    const { logout } = useUser();
+export default function Logout() {
+    const { logout } = useUserContext();
 
     useEffect(() => {
         logout()
     }, []);
 
-    return <p>Logging out</p>;
+    return (
+        <div className="w-full max-w-3xl mx-auto my-8 px-2 text-center">
+            <p>Logging out...</p>
+        </div>
+    );
 };
-
-export default Logout;

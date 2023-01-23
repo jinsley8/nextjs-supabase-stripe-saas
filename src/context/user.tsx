@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, ReactNode } from "react";
-import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/router";
+import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react'
+import { Database } from '@/types/database.types'
 
 type ContextType = any;
 
@@ -8,27 +9,34 @@ const Context = createContext<ContextType>({});
 
 const Provider = ({ children }: { children: ReactNode }) => {
     const router = useRouter();
-    const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const supabaseClient = useSupabaseClient<Database>();
+    const session = useSession();
+
+    const [user, setUser] = useState<any | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    console.log("USER - STATE", user);
+    console.log("USER - SESSION", session);
 
     useEffect(() => {
-        const getUserProfile = async () => {
- 
-            const { data: { user: sessionUser  } } = await supabase.auth.getUser();
+        console.log("SESSION IN USEEFFECT",  session);
 
-            console.log("sessionUser", sessionUser);
+        async function getUserProfile() {
+            console.log("SESSION IN ASYNC",  session);
 
-            if (sessionUser) {
-                const { data: profile } = await supabase
+            if (session) {
+                setIsLoading(true);
+
+                const { data: profile } = await supabaseClient
                     .from("profile")
                     .select("*")
-                    .eq("id", sessionUser?.id)
+                    .eq("id",  session?.user?.id)
                     .single();
 
-                    console.log("PROFILE", profile)
+                console.log("USER PROFILE", profile);
 
                 setUser({
-                    ...sessionUser,
+                    ...session?.user,
                     ...profile,
                 });
 
@@ -36,21 +44,25 @@ const Provider = ({ children }: { children: ReactNode }) => {
             }
         };
 
-        getUserProfile();
-
-        supabase.auth.onAuthStateChange(() => {
-            getUserProfile();
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if ("SIGNED_IN" === event && session) {
+                console.log('SIGNED_IN', session)
+                getUserProfile();
+            } else if ("SIGNED_OUT" === event) {
+                console.log('SIGNED_OUT', session)
+                setUser(null);
+            }
         });
     }, []);
 
     const login = async () => {
-        await supabase.auth.signInWithOAuth({
+        await supabaseClient.auth.signInWithOAuth({
             provider: "github",
         });
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         setUser(null);
         router.push("/");
     };
@@ -65,6 +77,6 @@ const Provider = ({ children }: { children: ReactNode }) => {
     return <Context.Provider value={exposed}>{children}</Context.Provider>;
 };
 
-export const useUser = () => useContext(Context);
+export const useUserContext = () => useContext(Context);
 
 export default Provider;

@@ -1,14 +1,16 @@
 import { useEffect } from "react";
-import { useUser } from "@/context/user";
+import { useUserContext } from "@/context/user";
 
-const Login = () => {
-    const { login } = useUser();
+export default function Login() {
+    const { login } = useUserContext();
 
     useEffect(() => {
         login()
     }, []);
 
-    return <p>Logging in</p>;
+    return (
+        <div className="w-full max-w-3xl mx-auto my-8 px-2 text-center">
+            <p>Logging in...</p>
+        </div>
+    );
 };
-
-export default Login;
