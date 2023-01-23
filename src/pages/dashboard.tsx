@@ -33,8 +33,6 @@ export default function Dashboard() {
 };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
-    const req = ctx.req as any;
-
 	// Create authenticated Supabase Client
 	const supabaseServerClient = createServerSupabaseClient<Database>(ctx);
 
@@ -42,8 +40,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 	const {
 		data: { session },
 	} = await supabaseServerClient.auth.getSession();
-
-	
 
 	if (!session) {
 		return {
@@ -54,8 +50,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
             props: {},
 		}
 	}
-
-    // const { data: lessons } = await supabaseServerClient.from("lesson").select("*");
 
 	return {
 		props: {

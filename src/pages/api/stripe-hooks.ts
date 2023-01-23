@@ -20,7 +20,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     try {
         event = stripe.webhooks.constructEvent(reqBuffer, signature, signingSecret);
     } catch (error) {
-        console.log(error);
         return res.status(400).send(`Webhook error: ${error.message}`);
     }
 

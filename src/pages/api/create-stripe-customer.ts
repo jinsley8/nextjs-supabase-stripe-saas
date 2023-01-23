@@ -1,39 +1,40 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import Stripe from 'stripe';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database.types'
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (req.query.API_ROUTE_SECRET !== process.env.API_ROUTE_SECRET) {
         return res.status(401).json("Not authorized to call this API");
     }
 
-    // Create authenticated Supabase Client
-    const supabaseServerClient = createServerSupabaseClient<Database>({
-        req,
-        res,
-    });
+    if (req.method === 'POST') {
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string,
-        {
-            // https://github.com/stripe/stripe-node#configuration
-            apiVersion: '2022-11-15',
+        // Create authenticated Supabase Client
+        const supabaseServerClient = createServerSupabaseClient<Database>({
+            req,
+            res,
+        });
+
+        try {
+            const customer = await stripe.customers.create({
+                email: req.body.record.email
+            });
+
+            await supabaseServerClient
+                .from('profile')
+                .update({ stripe_customer: customer.id })
+                .eq('id', req.body.record.id)
+                .select();
+
+            res.status(200).json({ message: `stripe customer created: ${customer.id}`});
+        } catch (err) {
+            res.status(err.statusCode || 500).json(err.message);
         }
-    );
-
-    const customer = await stripe.customers.create({
-        email: req.body.record.email
-    });
-
-    const { data } = await supabaseServerClient
-        .from('profile')
-        .update({ stripe_customer: customer.id })
-        .eq('id', req.body.record.id)
-        .select();
-
-    console.log("User Updated", data)
-
-    res.send({ message: `stripe customer created: ${customer.id}`});
+    } else {
+        res.setHeader('Allow', 'POST');
+        res.status(405).end('Method Not Allowed');
+    }
 }
 
 export default handler;
