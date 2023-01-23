@@ -11,6 +11,11 @@ const Nav = () => {
             <Link href="/">
                 Home
             </Link>
+            {!!user && (
+                <Link href="/dashboard" legacyBehavior>
+                    <a className="ml-2">Dashboard</a>
+                </Link>
+            )}
             <Link href="/pricing" legacyBehavior>
                 <a className="ml-2">Pricing</a>
             </Link>

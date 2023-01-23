@@ -1,4 +1,5 @@
 import { GetServerSidePropsContext } from 'next';
+import Link from 'next/link';
 import Stripe from 'stripe';
 import { loadStripe } from '@stripe/stripe-js';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
@@ -57,9 +58,9 @@ export default function Pricing ({ plans }: { plans: Plan[] }) {
                                     </button>
                                 )}
                                 {showManageSubscriptionButton && (
-                                    <button className="w-full justify-center rounded-lg text-sm font-semibold py-3 px-4 mt-8 bg-violet-800 text-white hover:bg-violet-500">
-                                        Manage Subscription
-                                    </button>
+                                    <Link href="/dashboard" legacyBehavior>
+                                        <a className="w-full block justify-center rounded-lg text-center text-sm font-semibold py-3 px-4 mt-8 bg-violet-800 text-white hover:bg-violet-500">Manage Subscription</a>
+                                    </Link>
                                 )}
                             </div>
                         )}
