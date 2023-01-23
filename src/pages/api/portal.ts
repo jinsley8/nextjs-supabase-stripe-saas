@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database.types';
+import { baseURL } from '@/helper/getBaseUrl';
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -35,16 +36,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
             const stripeSession = await stripe.billingPortal.sessions.create({
                 customer: data.stripe_customer,
-                return_url: "http://localhost:3000/dashboard",
+                return_url: `${baseURL}/dashboard`,
             });
 
-            console.log("STRIPE session", stripeSession);
-
             res.status(200).json({ stripeSession });
-
-            // res.send({
-            //     url: session.url,
-            // });
         } catch (err) {
             res.status(err.statusCode || 500).json(err.message);
         }

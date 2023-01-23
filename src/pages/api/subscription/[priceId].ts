@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database.types';
+import { baseURL } from '@/helper/getBaseUrl';
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -47,13 +48,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                 payment_method_types: ["card"],
                 currency: "cad",
                 line_items: lineItems,
-                success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/success`,
-                cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/cancel`,
+                success_url: `${baseURL}/payment/success`,
+                cancel_url: `${baseURL}/payment/cancel`,
             });
 
-            console.log("STRIPE session", stripeSession);
-
-            res.status(200).json({ stripeSession })
+            res.status(200).json({ stripeSession });
         } catch (err) {
             res.status(err.statusCode || 500).json(err.message);
         }
