@@ -15,15 +15,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    console.log("USER - STATE", user);
-    console.log("USER - SESSION", session);
-
     useEffect(() => {
-        console.log("SESSION IN USEEFFECT",  session);
-
         async function getUserProfile() {
-            console.log("SESSION IN ASYNC",  session);
-
             if (session) {
                 setIsLoading(true);
 
@@ -32,8 +25,6 @@ const Provider = ({ children }: { children: ReactNode }) => {
                     .select("*")
                     .eq("id",  session?.user?.id)
                     .single();
-
-                console.log("USER PROFILE", profile);
 
                 setUser({
                     ...session?.user,
@@ -60,7 +51,6 @@ const Provider = ({ children }: { children: ReactNode }) => {
             const subscription = supabaseClient
                 .channel(`profile:id=eq.${user.id}`)
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profile' }, (payload: any) => {
-                    console.log('Profile change received!', payload)
                     setUser({ ...user, ...payload.new });
                 })
                 .subscribe();
