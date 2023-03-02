@@ -37,10 +37,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
 
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if ("SIGNED_IN" === event && session) {
-                console.log('SIGNED_IN', session)
                 getUserProfile();
             } else if ("SIGNED_OUT" === event) {
-                console.log('SIGNED_OUT', session)
                 setUser(null);
             }
         });
