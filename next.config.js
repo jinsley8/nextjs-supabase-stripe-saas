@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    poweredByHeader: false,
     swcMinify: true,
-
-    // https://nextjs.org/docs/api-reference/next.config.js/ignoring-typescript-errors
-    // Remove this once type errors are fixed
+    compiler: {
+        removeConsole: process.env.NODE_ENV === 'production',
+    },
     ...(process.env.NODE_ENV === 'production' && {
         typescript: {
             ignoreBuildErrors: true,
