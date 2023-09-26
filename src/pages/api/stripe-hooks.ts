@@ -44,8 +44,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             break;
     }
 
-    console.log({ event });
-
     res.send({ received: true });
 };
 
