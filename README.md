@@ -9,12 +9,12 @@ Run as a new SQL Query in Supabase SQL Editor.
 CREATE TABLE IF NOT EXISTS public.profile (
     id                  uuid references auth.users(id) on delete cascade PRIMARY KEY,
     email               text UNIQUE,
-    is_subscribed       boolean NOT NULL DEFAULT false
+    is_subscribed       boolean NOT NULL DEFAULT false,
     interval            text,
     stripe_customer     text,
     created_at          timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-comment on table public.profiles is 'Profile data for active users';
+comment on table public.profile is 'Profile data for active users';
 
 -- LESSONS
 CREATE TABLE IF NOT EXISTS public.lesson (
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.lesson (
     description         text,
     created_at          timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-comment on table public.profiles is 'Lessons for users to view';
+comment on table public.lesson is 'Lessons for users to view';
 
 -- PREMIUM CONTENT
 CREATE TABLE IF NOT EXISTS public.premium_content (
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.premium_content (
     video_url           text,
     created_at          timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-comment on table public.profiles is 'Premium content for lessons';
+comment on table public.premium_content is 'Premium content for lessons';
 
 -- ENABLE RLS POLICIES
 ALTER TABLE public.profile enable row level security;
@@ -51,7 +51,7 @@ CREATE POLICY "Subscribed users can select premium content" ON public.lesson FOR
 SELECT
 USING (EXISTS
     (SELECT 1
-    FROM profile
+    FROM public.profile
     WHERE ((auth.uid() = profile.id) AND (profile.is_subscribed = true))))
 
 -- Trigger automatically creates a public.profile entry when a new user is created in auth.users.
